@@ -2,51 +2,63 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
-  const OPR_API_KEY = 'gw404o4g0884o4kc8oowc0c4wgswg44080s00w'; 
-
-  // Dominios de Élite para asegurar que el Dashboard se vea profesional de inmediato
-  const eliteTargets = ['notion.so', 'linear.app', 'v0.dev', 'midjourney.com'];
+  
+  // Verificamos si la petición viene del sistema automático o de un humano
+  const authHeader = request.headers.get('authorization');
+  const isAutoUpdate = authHeader === `Bearer ${process.env.CRON_SECRET}`;
 
   try {
-    console.log('--- 🛡️ EJECUTANDO INYECCIÓN DE ÉLITE ---');
+    console.log('--- 🤖 SISTEMA GHOST_SCAN: ACTUALIZACIÓN AUTOMÁTICA ---');
 
-    // Procesamos solo 2 por petición para no exceder los 10 segundos de timeout
-    const selected = eliteTargets.sort(() => 0.5 - Math.random()).slice(0, 2);
-    
-    for (const domain of selected) {
-      // 1. OPR Check rápido
-      const oprRes = await fetch(`https://openpagerank.com/api/v1.0/getPageRank?domains[]=${domain}`, {
-        headers: { 'API-OPR': OPR_API_KEY, 'User-Agent': 'Mozilla/5.0' }
+    // 1. FUENTE DE DATOS CRUDA (Aquí conectaríamos el feed de dominios expirados reales)
+    // Por ahora, simulamos el barrido de 20 candidatos para elegir los mejores 5
+    const rawMarketFeed = [
+      'quantum-ai.tech', 'pay-nexus.finance', 'bio-stack.com', 
+      'solar-grid.io', 'cyber-ops.dev', 'data-refinery.ai'
+    ];
+
+    // 2. FILTRADO Y PUNTUACIÓN (El "Cerebro" que trabaja mientras duermes)
+    const analyzedAssets = [];
+
+    for (const domain of rawMarketFeed) {
+      // Simulamos la consulta a APIs de autoridad (Ahrefs/DataForSEO/OPR)
+      // En producción, aquí haríamos las llamadas fetch que ya tenemos
+      const dr = Math.floor(Math.random() * (55 - 25) + 25); 
+      const traffic = Math.floor(dr * 1250);
+
+      analyzedAssets.push({
+        domain_name: domain,
+        niche: domain.includes('ai') ? 'AI' : 'FINTECH',
+        dr_score: dr,
+        backlinks_count: dr * 140,
+        estimated_traffic: traffic,
+        price_estimate: dr * 45,
+        top_keywords: ['ranking', 'residual', 'traffic'],
+        last_snapshot_url: `https://image.microlink.io/?url=https://${domain}&screenshot=true`,
+        detected_at: new Date().toISOString(),
       });
-      const oprData = await oprRes.json();
-      const dr = oprData.response?.[0] ? Math.round(parseFloat(oprData.response[0].page_rank_decimal) * 10) : 25;
-
-      // 2. Microlink Check (Aquí es donde suele tardar)
-      const mRes = await fetch(`https://api.microlink.io?url=https://${domain}&screenshot=true&meta=true`);
-      const mData = await mRes.json();
-
-      if (mData.status === 'success') {
-        const { error } = await supabase.from('opportunities').insert([{
-          domain_name: domain,
-          niche: 'PREMIUM ASSET',
-          dr_score: dr,
-          backlinks_count: Math.floor(dr * 350),
-          estimated_traffic: Math.floor(dr * 1200), // Dato simulado de tráfico masivo
-          price_estimate: 2500, // Valor de mercado real
-          top_keywords: mData.data.title?.split(' ').slice(0, 3) || ['saas'],
-          last_snapshot_url: mData.data.screenshot.url,
-          detected_at: new Date().toISOString(),
-        }]);
-        
-        if (error) console.error("Error insertando:", domain, error.message);
-      }
     }
 
-    return NextResponse.json({ success: true, message: "Inyección completada" });
+    // 3. RANKING DINÁMICO: Solo guardamos el Top 5 con más tráfico
+    const top5 = analyzedAssets
+      .sort((a, b) => b.estimated_traffic - a.estimated_traffic)
+      .slice(0, 5);
+
+    // 4. PERSISTENCIA: Reemplazamos la lista anterior por la nueva "mina de oro"
+    await supabase.from('opportunities').delete().neq('domain_name', '');
+    const { data, error } = await supabase.from('opportunities').insert(top5).select();
+
+    if (error) throw error;
+
+    return NextResponse.json({ 
+      status: 'success', 
+      message: 'Ranking actualizado a las 00:00',
+      count: data.length 
+    });
 
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
   }
 }
