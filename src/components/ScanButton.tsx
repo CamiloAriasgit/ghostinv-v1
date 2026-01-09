@@ -44,7 +44,7 @@ export default function ScanButton() {
         text-[10px] font-mono tracking-widest uppercase font-bold transition-colors
         ${loading ? 'text-indigo-400' : 'text-neutral-400 group-hover:text-neutral-200'}
       `}>
-        {loading ? 'Sincronizando...' : 'Forzar Escaneo'}
+        {loading ? 'Sincronizando...' : 'Escanear'}
       </span>
 
       {loading ? (
