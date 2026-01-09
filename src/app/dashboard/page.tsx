@@ -53,9 +53,9 @@ export default async function Dashboard() {
         <div className="max-w-7xl mx-auto px-3">
           <div className="flex justify-between h-14 items-center">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
-                  <Activity size={14} className="text-black" />
+              <div className="flex items-center gap-1">
+                <div className="rounded flex items-center justify-center">
+                  <Activity size={14} className="text-indigo-500" />
                 </div>
                 <span className="text-white font-bold tracking-tighter text-lg uppercase">GhostInv</span>
               </div>
